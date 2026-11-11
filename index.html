@@ -88,7 +88,7 @@
     <h2>Мрежи</h2>
     <div class="nets" id="nets"></div>
     <div class="row" style="margin-top:12px">
-      <label class="check"><input type="checkbox" id="fbrecent" checked> Facebook: най-новите първо</label>
+      <label class="check"><input type="checkbox" id="fbrecent"> Facebook: най-новите първо (може да покаже по-малко резултати)</label>
     </div>
     <div class="row field" style="max-width:420px">
       <div style="flex:1">
@@ -230,7 +230,7 @@
   $('to').addEventListener('change', function () { markPreset(null); });
 
   // запомняне на настройките (без периода – той винаги започва от „вчера и днес“)
-  var KEY = 'social-search-v2';
+  var KEY = 'social-search-v3';
   var SAVED = ['kw', 'perday', 'fbrecent', 'fbauthor'].concat(NETS.map(function (n) { return 'n_' + n.id; }));
   function save() {
     try {
@@ -320,7 +320,7 @@
   $('openall').addEventListener('click', function () { links.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); });
   $('reset').addEventListener('click', function () {
     $('kw').value = ''; $('fbauthor').value = '';
-    $('perday').checked = false; $('fbrecent').checked = true;
+    $('perday').checked = false; $('fbrecent').checked = false;
     NETS.forEach(function (n) { $('n_' + n.id).checked = !!n.on; });
     setPreset('yt');
     $('out').innerHTML = ''; links = [];
