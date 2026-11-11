@@ -61,11 +61,7 @@
 
   <div class="card">
     <h2>Ключови думи</h2>
-    <textarea id="kw" placeholder="По една ключова дума или фраза на ред, напр.&#10;Баница&#10;Шопска салата"></textarea>
-    <div class="row" style="margin-top:8px">
-      <label class="check"><input type="checkbox" id="exact"> Точна фраза (в кавички)</label>
-    </div>
-  </div>
+    <textarea id="kw" placeholder="По една ключова дума или фраза на ред, напр.&#10;Баница&#10;Шопска салата"></textarea>  </div>
 
   <div class="card">
     <h2>Период</h2>
@@ -234,7 +230,7 @@
 
   // запомняне на настройките (без периода – той винаги започва от „вчера и днес“)
   var KEY = 'social-search-v1';
-  var SAVED = ['kw', 'exact', 'perday', 'fbrecent', 'fbauthor'].concat(NETS.map(function (n) { return 'n_' + n.id; }));
+  var SAVED = ['kw', 'perday', 'fbrecent', 'fbauthor'].concat(NETS.map(function (n) { return 'n_' + n.id; }));
   function save() {
     try {
       var s = {};
@@ -289,7 +285,7 @@
       g.appendChild(h);
 
       kws.forEach(function (kw) {
-        var q = $('exact').checked && !/^".*"$/.test(kw) ? '"' + kw + '"' : kw;
+        var q = kw;
         (n.exact && days.length ? days : whole).forEach(function (r) {
           var u = n.url(q, r[0], r[1], o);
           links.push(u); mine.push(u);
@@ -323,7 +319,7 @@
   $('openall').addEventListener('click', function () { links.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); });
   $('reset').addEventListener('click', function () {
     $('kw').value = ''; $('fbauthor').value = '';
-    ['exact', 'perday', 'fbrecent'].forEach(function (id) { $(id).checked = false; });
+    ['perday', 'fbrecent'].forEach(function (id) { $(id).checked = false; });
     NETS.forEach(function (n) { $('n_' + n.id).checked = !!n.on; });
     setPreset('yt');
     $('out').innerHTML = ''; links = [];
