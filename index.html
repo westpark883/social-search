@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Търсене в социални мрежи</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #1c1e21; --muted: #65676b; --line: #dcdfe4;
+    --accent: #1877f2; --accent-text: #ffffff; --chip: #e7f0fe; --chip-text: #0b5fcc; --warn: #8a5a00; --warn-bg: #fff4d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18191a; --card: #242526; --text: #e4e6eb; --muted: #a8abaf; --line: #3a3b3c;
+      --accent: #2d88ff; --accent-text: #ffffff; --chip: #263951; --chip-text: #8cbcff; --warn: #f0c36a; --warn-bg: #3a3222;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 10px; }
+  textarea, input[type=date], input[type=text] {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row + .row { margin-top: 10px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 7px 12px; }
+  button:hover { border-color: var(--accent); }
+  button.on { background: var(--chip); color: var(--chip-text); border-color: var(--accent); font-weight: 600; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; padding: 10px 18px; }
+  .dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 420px; }
+  .dates label, .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 3px; }
+  label.check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; margin-right: 14px; }
+  .nets { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px 14px; }
+  .nets small { color: var(--muted); }
+  .group { margin-top: 14px; }
+  .group h3 { font-size: 16px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .group h3 small { font-weight: 400; color: var(--muted); font-size: 13px; }
+  .link { display: flex; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+  .link a { color: var(--accent); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; flex: 1; }
+  .link a:hover { text-decoration: underline; }
+  .link .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .link button, .group h3 button { padding: 3px 9px; font-size: 13px; }
+  .note { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 10px; }
+  details { margin-top: 8px; color: var(--muted); font-size: 14px; }
+  details li { margin-bottom: 4px; }
+  #empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Търсене в социални мрежи</h1>
+  <p class="sub">Въведете ключови думи и период – инструментът създава готови връзки за търсене. Резултатите се отварят в самата мрежа, затова трябва да сте влезли в профила си.</p>
+
+  <div class="card">
+    <h2>Ключови думи</h2>
+    <textarea id="kw" placeholder="По една ключова дума или фраза на ред, напр.&#10;Софарма&#10;Златна Панега"></textarea>
+    <div class="row" style="margin-top:8px">
+      <label class="check"><input type="checkbox" id="exact"> Точна фраза (в кавички)</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Период</h2>
+    <div class="row" id="presets">
+      <button data-p="yt">Вчера и днес</button>
+      <button data-p="today">Днес</button>
+      <button data-p="yesterday">Вчера</button>
+      <button data-p="fri">От петък до днес</button>
+      <button data-p="7">Последните 7 дни</button>
+      <button data-p="30">Последните 30 дни</button>
+    </div>
+    <div class="row">
+      <div class="dates">
+        <div><label for="from">От</label><input type="date" id="from"></div>
+        <div><label for="to">До</label><input type="date" id="to"></div>
+      </div>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="perday"> Отделна връзка за всеки ден (по-пълни резултати във Facebook)</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Мрежи</h2>
+    <div class="nets" id="nets"></div>
+    <div class="row" style="margin-top:12px">
+      <label class="check"><input type="checkbox" id="fbrecent"> Facebook: най-новите първо</label>
+    </div>
+    <div class="row field" style="max-width:420px">
+      <div style="flex:1">
+        <label for="fbauthor">Facebook: само публикации от профил/страница с ID (по избор)</label>
+        <input type="text" id="fbauthor" inputmode="numeric" placeholder="напр. 100064820000000">
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:16px">
+    <button class="primary" id="go">Създай връзките</button>
+    <button id="openall" hidden>Отвори всички</button>
+    <button id="reset">Изчисти</button>
+  </div>
+
+  <div class="card" id="results">
+    <h2>Връзки</h2>
+    <div id="empty">Тук ще се появят връзките за търсене.</div>
+    <div id="out"></div>
+  </div>
+
+  <div class="card">
+    <h2>Добре е да знаете</h2>
+    <details open>
+      <summary>Как работи и какви са ограниченията</summary>
+      <ul>
+        <li>Инструментът не събира и не съхранява данни – само сглобява адреса за търсене и го отваря в нов раздел.</li>
+        <li><b>Facebook</b>: филтърът по дата е точен до ден, но Facebook показва само публични публикации и такива, до които вашият профил има достъп, и не гарантира пълнота. За по-пълни резултати търсете ден по ден.</li>
+        <li><b>X и Bluesky</b>: точен период. <b>LinkedIn, YouTube, Reddit</b>: позволяват само „последните 24 часа / седмица / месец“ – избира се най-близкият интервал, който покрива периода.</li>
+        <li><b>Instagram, TikTok, Telegram</b>: нямат търсене по дата, затова връзката е към Google с ограничение по сайт и период (показва само индексираното от Google).</li>
+        <li>„Отвори всички“ отваря много раздели наведнъж – браузърът може да поиска разрешение за изскачащи прозорци.</li>
+      </ul>
+    </details>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var DAY = 86400000;
+
+  // ---- дати ----
+  function today() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parse(s) { var p = s.split('-'); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : null; }
+  function bg(d) { return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear(); }
+  function us(d) { return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear(); }
+  function label(a, b) { return +a === +b ? bg(a) : bg(a) + ' – ' + bg(b); }
+  function enc(s) { return encodeURIComponent(s); }
+
+  // ---- Facebook ----
+  function fbFilters(a, b, o) {
+    var ym = function (d) { return d.getFullYear() + '-' + (d.getMonth() + 1); };
+    var args = JSON.stringify({
+      start_year: String(a.getFullYear()), start_month: ym(a),
+      end_year: String(b.getFullYear()), end_month: ym(b),
+      start_day: ym(a) + '-' + a.getDate(), end_day: ym(b) + '-' + b.getDate()
+    });
+    var f = {};
+    if (o.fbrecent) f['recent_posts:0'] = JSON.stringify({ name: 'recent_posts', args: '' });
+    if (o.fbauthor) f['rp_author:0'] = JSON.stringify({ name: 'author', args: o.fbauthor });
+    f['rp_creation_time:0'] = JSON.stringify({ name: 'creation_time', args: args });
+    return btoa(JSON.stringify(f));
+  }
+
+  // най-близкият „относителен“ интервал, който покрива периода (за мрежи без точни дати)
+  function span(a) {
+    var n = Math.round((today() - a) / DAY);
+    return n <= 0 ? 'day' : n <= 6 ? 'week' : n <= 29 ? 'month' : 'any';
+  }
+  var SPAN_BG = { day: 'последните 24 часа', week: 'последната седмица', month: 'последния месец', any: 'без ограничение' };
+
+  function google(site) {
+    return function (q, a, b) {
+      return 'https://www.google.com/search?q=' + enc(q + ' site:' + site) +
+        '&tbs=' + enc('cdr:1,cd_min:' + us(a) + ',cd_max:' + us(b)) + '&filter=0';
+    };
+  }
+
+  var NETS = [
+    { id: 'fb', name: 'Facebook', info: 'точен период', exact: true, on: true,
+      url: function (q, a, b, o) { return 'https://www.facebook.com/search/posts/?q=' + enc(q) + '&filters=' + enc(fbFilters(a, b, o)); } },
+    { id: 'x', name: 'X (Twitter)', info: 'точен период', exact: true,
+      url: function (q, a, b) { return 'https://x.com/search?q=' + enc(q + ' since:' + iso(a) + ' until:' + iso(addDays(b, 1))) + '&f=live'; } },
+    { id: 'li', name: 'LinkedIn', info: '24 ч / седмица / месец',
+      url: function (q, a) {
+        var m = { day: 'past-24h', week: 'past-week', month: 'past-month' }[span(a)];
+        return 'https://www.linkedin.com/search/results/content/?keywords=' + enc(q) +
+          (m ? '&datePosted=' + enc('"' + m + '"') : '') + '&sortBy=' + enc('"date_posted"');
+      } },
+    { id: 'yt', name: 'YouTube', info: 'днес / седмица / месец',
+      url: function (q, a) {
+        var m = { day: 'CAISAggC', week: 'CAISAggD', month: 'CAISAggE', any: 'CAI%3D' }[span(a)];
+        return 'https://www.youtube.com/results?search_query=' + enc(q) + '&sp=' + m;
+      } },
+    { id: 'rd', name: 'Reddit', info: '24 ч / седмица / месец',
+      url: function (q, a) {
+        var m = { day: 'day', week: 'week', month: 'month', any: 'all' }[span(a)];
+        return 'https://www.reddit.com/search/?q=' + enc(q) + '&sort=new&t=' + m;
+      } },
+    { id: 'bs', name: 'Bluesky', info: 'точен период', exact: true,
+      url: function (q, a, b) { return 'https://bsky.app/search?q=' + enc(q + ' since:' + iso(a) + ' until:' + iso(addDays(b, 1))); } },
+    { id: 'th', name: 'Threads', info: 'без дата – най-новите', nodate: true,
+      url: function (q) { return 'https://www.threads.com/search?q=' + enc(q) + '&filter=recent'; } },
+    { id: 'ig', name: 'Instagram', info: 'през Google, точен период', exact: true, url: google('instagram.com') },
+    { id: 'tt', name: 'TikTok', info: 'през Google, точен период', exact: true, url: google('tiktok.com') },
+    { id: 'tg', name: 'Telegram', info: 'през Google, точен период', exact: true, url: google('t.me') },
+    { id: 'gfb', name: 'Facebook през Google', info: 'допълнителна проверка', exact: true, url: google('facebook.com') }
+  ];
+
+  // ---- интерфейс ----
+  var netsBox = $('nets');
+  NETS.forEach(function (n) {
+    var l = document.createElement('label');
+    l.className = 'check';
+    l.innerHTML = '<input type="checkbox" id="n_' + n.id + '"' + (n.on ? ' checked' : '') + '> <span>' + n.name + ' <small>· ' + n.info + '</small></span>';
+    netsBox.appendChild(l);
+  });
+
+  function setPreset(p) {
+    var t = today(), a = t, b = t;
+    if (p === 'yt') a = addDays(t, -1);
+    else if (p === 'yesterday') a = b = addDays(t, -1);
+    else if (p === 'fri') a = addDays(t, -((t.getDay() + 2) % 7 || 7));
+    else if (p === '7') a = addDays(t, -6);
+    else if (p === '30') a = addDays(t, -29);
+    $('from').value = iso(a); $('to').value = iso(b);
+    markPreset(p);
+  }
+  function markPreset(p) {
+    [].forEach.call(document.querySelectorAll('#presets button'), function (x) { x.classList.toggle('on', x.dataset.p === p); });
+  }
+  $('presets').addEventListener('click', function (e) { if (e.target.dataset.p) setPreset(e.target.dataset.p); });
+  $('from').addEventListener('change', function () { markPreset(null); });
+  $('to').addEventListener('change', function () { markPreset(null); });
+
+  // запомняне на настройките (без периода – той винаги започва от „вчера и днес“)
+  var KEY = 'social-search-v1';
+  var SAVED = ['kw', 'exact', 'perday', 'fbrecent', 'fbauthor'].concat(NETS.map(function (n) { return 'n_' + n.id; }));
+  function save() {
+    try {
+      var s = {};
+      SAVED.forEach(function (id) { var el = $(id); s[id] = el.type === 'checkbox' ? el.checked : el.value; });
+      localStorage.setItem(KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY) || '{}');
+      SAVED.forEach(function (id) {
+        if (!(id in s)) return;
+        var el = $(id);
+        if (el.type === 'checkbox') el.checked = s[id]; else el.value = s[id];
+      });
+    } catch (e) {}
+  }
+
+  var links = [];
+  function build() {
+    var out = $('out');
+    out.innerHTML = ''; links = [];
+    var kws = $('kw').value.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    var a = parse($('from').value), b = parse($('to').value);
+    var nets = NETS.filter(function (n) { return $('n_' + n.id).checked; });
+    var problem = !kws.length ? 'Въведете поне една ключова дума.'
+      : !a || !b ? 'Изберете начална и крайна дата.'
+      : a > b ? 'Началната дата е след крайната.'
+      : !nets.length ? 'Изберете поне една мрежа.' : '';
+    $('empty').hidden = !problem; $('empty').textContent = problem;
+    $('openall').hidden = !!problem;
+    if (problem) return;
+    save();
+
+    var o = { fbrecent: $('fbrecent').checked, fbauthor: $('fbauthor').value.replace(/\D/g, '') };
+    var days = [];
+    if ($('perday').checked) for (var d = a; d <= b; d = addDays(d, 1)) days.push([d, d]);
+    if (days.length > 62) { days = []; }
+    var whole = [[a, b]];
+
+    nets.forEach(function (n) {
+      var g = document.createElement('div'); g.className = 'group';
+      var h = document.createElement('h3');
+      h.appendChild(document.createTextNode(n.name));
+      var sm = document.createElement('small');
+      sm.textContent = n.exact ? '' : n.nodate ? 'мрежата няма филтър по дата' : 'интервал: ' + SPAN_BG[span(a)];
+      h.appendChild(sm);
+      var mine = [];
+      var ob = document.createElement('button'); ob.textContent = 'Отвори тези';
+      ob.onclick = function () { mine.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); };
+      h.appendChild(ob);
+      g.appendChild(h);
+
+      kws.forEach(function (kw) {
+        var q = $('exact').checked && !/^".*"$/.test(kw) ? '"' + kw + '"' : kw;
+        (n.exact && days.length ? days : whole).forEach(function (r) {
+          var u = n.url(q, r[0], r[1], o);
+          links.push(u); mine.push(u);
+          var row = document.createElement('div'); row.className = 'link';
+          var an = document.createElement('a');
+          an.href = u; an.target = '_blank'; an.rel = 'noopener'; an.textContent = kw;
+          var w = document.createElement('span'); w.className = 'when';
+          w.textContent = n.exact ? label(r[0], r[1]) : '';
+          var c = document.createElement('button'); c.textContent = 'Копирай';
+          c.onclick = function () {
+            var done = function () { c.textContent = 'Копирано'; setTimeout(function () { c.textContent = 'Копирай'; }, 1200); };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, function () { prompt('Копирайте връзката:', u); });
+            else prompt('Копирайте връзката:', u);
+          };
+          row.appendChild(an); row.appendChild(w); row.appendChild(c);
+          g.appendChild(row);
+        });
+      });
+      out.appendChild(g);
+    });
+
+    if (links.length > 8) {
+      var note = document.createElement('div'); note.className = 'note';
+      note.textContent = 'Създадени са ' + links.length + ' връзки. „Отвори всички“ ще отвори толкова раздела – браузърът може да поиска разрешение за изскачащи прозорци.';
+      out.appendChild(note);
+    }
+    $('openall').textContent = 'Отвори всички (' + links.length + ')';
+  }
+
+  $('go').addEventListener('click', build);
+  $('openall').addEventListener('click', function () { links.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); });
+  $('reset').addEventListener('click', function () {
+    $('kw').value = ''; $('fbauthor').value = '';
+    ['exact', 'perday', 'fbrecent'].forEach(function (id) { $(id).checked = false; });
+    NETS.forEach(function (n) { $('n_' + n.id).checked = !!n.on; });
+    setPreset('yt');
+    $('out').innerHTML = ''; links = [];
+    $('openall').hidden = true;
+    $('empty').hidden = false; $('empty').textContent = 'Тук ще се появят връзките за търсене.';
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    $('kw').focus();
+  });
+  $('kw').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) build(); });
+
+  load();
+  setPreset('yt');
+})();
+</script>
+</body>
+</html>
