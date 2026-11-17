@@ -116,7 +116,7 @@
     <details open>
       <summary>Как работи и какви са ограниченията</summary>
       <ul>
-        <li>Инструментът не събира и не съхранява данни – само сглобява адреса за търсене и го отваря в нов раздел.</li>
+        <li>Инструментът сглобява адреса за търсене и го отваря в нов раздел. За статистика се записват анонимно само ключовата дума, мрежите, периодът и часът на търсене – без име, IP адрес или резултати.</li>
         <li><b>Точна фраза</b>: оградете я сами с кавички в полето, напр. "Шопска салата". Не всяка мрежа зачита кавичките – при Facebook резултатът често е същият като без тях.</li>
         <li><b>Facebook</b>: филтърът по дата е точен до ден, но Facebook показва само публични публикации и такива, до които вашият профил има достъп, и не гарантира пълнота. За по-пълни резултати търсете ден по ден.</li>
         <li><b>X и Bluesky</b>: точен период. <b>LinkedIn, YouTube, Reddit</b>: позволяват само „последните 24 часа / седмица / месец“ – избира се най-близкият интервал, който покрива периода.</li>
@@ -232,6 +232,18 @@
 
   // запомняне на настройките (без периода – той винаги започва от „вчера и днес“)
   var KEY = 'social-search-v3';
+  // Анонимен лог (Apps Script към Google таблица). Празно = без запис.
+  var LOG_URL = 'https://script.google.com/macros/s/AKfycbydtCBMK64aB7-xwbAJ0uz24erNHZdnu4mPenTMg4v4u2tF9EgATbX_ld7cAB-Ep5mG/exec';
+  function logSearch(kws, nets, a, b) {
+    if (!LOG_URL) return;
+    try {
+      fetch(LOG_URL, {
+        method: 'POST', mode: 'no-cors', keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ keywords: kws, networks: nets.map(function (n) { return n.name; }).join(', '), period: label(a, b) })
+      }).catch(function () {});
+    } catch (e) {}
+  }
   var SAVED = ['kw', 'perday', 'fbrecent', 'fbauthor'].concat(NETS.map(function (n) { return 'n_' + n.id; }));
   function save() {
     try {
@@ -266,6 +278,7 @@
     $('openall').hidden = !!problem;
     if (problem) return;
     save();
+    logSearch(kws, nets, a, b);
 
     var o = { fbrecent: $('fbrecent').checked, fbauthor: $('fbauthor').value.replace(/\D/g, '') };
     var days = [];
