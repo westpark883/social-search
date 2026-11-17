@@ -103,6 +103,7 @@
     <button id="openall" hidden>Отвори всички</button>
     <button id="reset">Изчисти</button>
   </div>
+  <div class="note" id="blocked" hidden style="margin:-6px 0 16px"></div>
 
   <div class="card" id="results">
     <h2>Връзки</h2>
@@ -281,7 +282,7 @@
       h.appendChild(sm);
       var mine = [];
       var ob = document.createElement('button'); ob.textContent = 'Отвори тези';
-      ob.onclick = function () { mine.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); };
+      ob.onclick = function () { openMany(mine); };
       h.appendChild(ob);
       g.appendChild(h);
 
@@ -317,14 +318,27 @@
   }
 
   $('go').addEventListener('click', build);
-  $('openall').addEventListener('click', function () { links.forEach(function (u) { window.open(u, '_blank', 'noopener'); }); });
+  // Браузърите пускат само един нов раздел на клик, освен ако сайтът няма разрешение за изскачащи прозорци.
+  function openMany(urls) {
+    var blocked = 0;
+    urls.forEach(function (u) {
+      var w = window.open(u, '_blank');
+      if (!w) blocked++; else { try { w.opener = null; } catch (e) {} }
+    });
+    var b = $('blocked');
+    if (blocked) {
+      b.innerHTML = '<b>Браузърът спря ' + blocked + ' от ' + urls.length + ' раздела.</b> Еднократна настройка: натиснете иконата за блокиран прозорец в десния край на адресната лента → „Винаги разрешавай изскачащи прозорци и пренасочвания от ' + (location.hostname || 'този сайт') + '“ → „Готово“. После натиснете отново „Отвори всички“.';
+      b.hidden = false;
+    } else b.hidden = true;
+  }
+  $('openall').addEventListener('click', function () { openMany(links); });
   $('reset').addEventListener('click', function () {
     $('kw').value = ''; $('fbauthor').value = '';
     $('perday').checked = false; $('fbrecent').checked = false;
     NETS.forEach(function (n) { $('n_' + n.id).checked = !!n.on; });
     setPreset('yt');
     $('out').innerHTML = ''; links = [];
-    $('openall').hidden = true;
+    $('openall').hidden = true; $('blocked').hidden = true;
     $('empty').hidden = false; $('empty').textContent = 'Тук ще се появят връзките за търсене.';
     try { localStorage.removeItem(KEY); } catch (e) {}
     $('kw').focus();
